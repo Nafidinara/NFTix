@@ -18,7 +18,6 @@ contract ConcertTicketSystem is Ownable {
         uint256 ticketPrice;
         uint256 ticketQuantity;
         string ticketClass;
-        uint256 startBuy;
         uint256 endBuy;
     }
 
@@ -47,14 +46,19 @@ contract ConcertTicketSystem is Ownable {
         nftFactory = NFTFactory(_nftFactoryAddress);
     }
 
+    enum TicketClass{
+        None,
+        General,
+        VIP,
+        VVIP
+    }
+
     function addConcert(
         string memory _artistName,
         string memory _venue,
         uint256 _date,
         uint256 _ticketPrice,
         uint256 _ticketQuantity,
-        //ticketClass need to change to enum
-        string memory _ticketClass,
         uint256 _startBuy,
         uint256 _endBuy
     ) public onlyOwner {
@@ -66,7 +70,6 @@ contract ConcertTicketSystem is Ownable {
             _date,
             _ticketPrice,
             _ticketQuantity,
-            _ticketClass,
             _startBuy,
             _endBuy
         );
