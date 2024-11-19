@@ -11,23 +11,35 @@ contract ConcertTicketSystem is Ownable {
     NFTFactory public nftFactory;
     mapping(uint256 => address) public concertNFTs;
 
+    struct TicketClass {
+        string name;
+        uint256 price;
+        uint256 quantity;
+        uint256 startBuy;
+        uint256 endBuy;
+    }
+
     struct Concert {
         string artistName;
         string venue;
         uint256 date;
-        uint256 ticketPrice;
-        uint256 ticketQuantity;
-        uint256 startBuy;
-        uint256 endBuy;
+        string symbol;
+        TicketClass[] ticketClasses;
     }
 
     mapping(uint256 => Concert) public concerts;
 
     event ConcertAdded(
-        uint256 indexed concertId,
+        uint256 concertId,
         string artistName,
         string venue,
         uint256 date
+    );
+    event TicketClassAdded(
+        uint256 concertId,
+        string className,
+        uint256 price,
+        uint256 quantity
     );
     event TicketPurchased(
         uint256 indexed concertId,
@@ -46,71 +58,104 @@ contract ConcertTicketSystem is Ownable {
         nftFactory = NFTFactory(_nftFactoryAddress);
     }
 
-    enum TicketClass{
-        None,
-        General,
-        VIP,
-        VVIP
-    }
-
     function addConcert(
         string memory _artistName,
         string memory _venue,
         uint256 _date,
-        uint256 _ticketPrice,
-        uint256 _ticketQuantity,
-        uint256 _startBuy,
-        uint256 _endBuy
+        TicketClass[] memory _ticketClasses
     ) public onlyOwner {
         _concertIds++;
         uint256 newConcertId = _concertIds;
-        concerts[newConcertId] = Concert(
-            _artistName,
-            _venue,
-            _date,
-            _ticketPrice,
-            _ticketQuantity,
-            _startBuy,
-            _endBuy
-        );
 
-        require(_endBuy>_startBuy, "starting time must be before the closing time");
-        require(_date>_startBuy, "ticket must be purchased prior to the event");
+        concerts[newConcertId].artistName = _artistName;
+        concerts[newConcertId].venue = _venue;
+        concerts[newConcertId].date = _date;
 
-        //get token symbol from parameter
-        address nftAddress = nftFactory.createNFT(
-            string(abi.encodePacked(_artistName, " - ", _venue)),
-            "CTKTS"
+        for (uint i = 0; i < _ticketClasses.length; i++) {
+            concerts[newConcertId].ticketClasses.push(_ticketClasses[i]);
+            emit TicketClassAdded(
+                newConcertId,
+                _ticketClasses[i].name,
+                _ticketClasses[i].price,
+                _ticketClasses[i].quantity
+            );
+        }
+
+        // Use NFTFactory to create a new NFT contract for this concert
+        string memory nftName = string(
+            abi.encodePacked(_artistName, " - ", _venue, " Tickets")
         );
+        string memory nftSymbol = symbol;
+        address nftAddress = nftFactory.createNFT(nftName, nftSymbol);
         concertNFTs[newConcertId] = nftAddress;
 
         emit ConcertAdded(newConcertId, _artistName, _venue, _date);
     }
 
-    function buyTicket(uint256 _concertId) public payable {
+    function buyTicket(
+        uint256 _concertId,
+        uint256 _ticketClassIndex
+    ) public payable {
         Concert storage concert = concerts[_concertId];
         require(
-            block.timestamp >= concert.startBuy &&
-                block.timestamp <= concert.endBuy,
-            "Ticket sale is not active"
+            _ticketClassIndex < concert.ticketClasses.length,
+            "Invalid ticket class"
         );
-        require(msg.value >= concert.ticketPrice, "Insufficient payment");
-        require(concert.ticketQuantity > 0, "Sold out");
+        TicketClass storage ticketClass = concert.ticketClasses[
+            _ticketClassIndex
+        ];
 
-        ConcertTicketNFT nft = ConcertTicketNFT(concertNFTs[_concertId]);
-        string memory tokenURI = string(
-            abi.encodePacked(
-                "https://example.com/api/ticket/",
-                _concertId,
-                "/",
-                concert.ticketQuantity
-            )
+        require(
+            block.timestamp >= ticketClass.startBuy,
+            "Ticket sale has not started"
+        );
+        require(block.timestamp <= ticketClass.endBuy, "Ticket sale has ended");
+        require(msg.value >= ticketClass.price, "Insufficient payment");
+        require(ticketClass.quantity > 0, "Sold out");
+
+        address nftAddress = concertNFTs[_concertId];
+        require(nftAddress != address(0), "NFT contract not set");
+
+        ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
+        string memory tokenURI = generateTokenURI(
+            _concertId,
+            _ticketClassIndex,
+            ticketClass.quantity
         );
         uint256 tokenId = nft.safeMint(msg.sender, tokenURI);
 
-        concert.ticketQuantity--;
+        unchecked {
+            ticketClass.quantity--;
+        }
 
-        emit TicketPurchased(_concertId, tokenId, msg.sender);
+        if (msg.value > ticketClass.price) {
+            payable(msg.sender).transfer(msg.value - ticketClass.price);
+        }
+
+        emit TicketPurchased(
+            _concertId,
+            tokenId,
+            msg.sender,
+            _ticketClassIndex
+        );
+    }
+
+    function generateTokenURI(
+        uint256 _concertId,
+        uint256 _ticketClassIndex,
+        uint256 _ticketNumber
+    ) internal pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    "https://example.com/api/ticket/",
+                    toString(_concertId),
+                    "/",
+                    toString(_ticketClassIndex),
+                    "/",
+                    toString(_ticketNumber)
+                )
+            );
     }
 
     // function resellTicket(
