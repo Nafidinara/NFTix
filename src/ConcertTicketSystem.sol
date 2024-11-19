@@ -17,7 +17,6 @@ contract ConcertTicketSystem is Ownable {
         uint256 date;
         uint256 ticketPrice;
         uint256 ticketQuantity;
-        TicketClass ticketClass;
         uint256 startBuy;
         uint256 endBuy;
     }
@@ -47,7 +46,7 @@ contract ConcertTicketSystem is Ownable {
         nftFactory = NFTFactory(_nftFactoryAddress);
     }
 
-    enum TicketClass {
+    enum TicketClass{
         None,
         General,
         VIP,
@@ -60,7 +59,6 @@ contract ConcertTicketSystem is Ownable {
         uint256 _date,
         uint256 _ticketPrice,
         uint256 _ticketQuantity,
-        TicketClass _ticketClass,
         uint256 _startBuy,
         uint256 _endBuy
     ) public onlyOwner {
@@ -72,10 +70,12 @@ contract ConcertTicketSystem is Ownable {
             _date,
             _ticketPrice,
             _ticketQuantity,
-            _ticketClass,
             _startBuy,
             _endBuy
         );
+
+        require(_endBuy>_startBuy, "starting time must be before the closing time");
+        require(_date>_startBuy, "ticket must be purchased prior to the event");
 
         //get token symbol from parameter
         address nftAddress = nftFactory.createNFT(
