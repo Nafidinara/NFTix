@@ -7,4 +7,4 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Test, console} from "forge-std/Test.sol";
 import {Counter} from "../src/Counter.sol";
-import {VotingSystem} from "../src/ConcertTicketNFT.sol";
+import {ConcertTicketNFT} from "../src/ConcertTicketNFT.sol";

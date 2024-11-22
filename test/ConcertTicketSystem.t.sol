@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Test, console} from "forge-std/Test.sol";
 import {Counter} from "../src/Counter.sol";
-import {VotingSystem} from "../src/ConcertTicketSystem.sol";
+import {ConcertTicketSystem} from "../src/ConcertTicketSystem.sol";
 
 contract ConcertTicketSystemTest is Test {
     ConcertTicketSystem public concertTicketSystem;
@@ -31,16 +31,6 @@ contract ConcertTicketSystemTest is Test {
         vm.stopPrank();
     }
 
-    //add ticket class
-    ticketClasses[0] = ConcertTicketSystem.TicketClass({
-            "VIP",
-            1 ether,
-            100,
-            block.timestamp + 1 days,
-            block.timestamp + 10 days,
-            true,
-            2 ether
-        });
 
     //helper function
     function addConcert() public{
@@ -161,5 +151,5 @@ contract BuyTicketTest is ConcertTicketSystemTest{
     }
 
     //unhappy path
-    
+
 }
