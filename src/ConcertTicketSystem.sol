@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol"; // Added for emergency stops
@@ -8,7 +8,7 @@ import "./NFTFactory.sol";
 import "./ConcertTicketNFT.sol";
 
 contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
-    uint256 private _concertIds;
+    uint256 public _concertIds;
     uint256 public constant RESALE_FEE_PERCENTAGE = 5; // 5% fee on resales
 
     NFTFactory public nftFactory;
