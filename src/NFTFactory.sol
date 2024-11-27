@@ -6,12 +6,7 @@ import "./ConcertTicketNFT.sol";
 
 contract NFTFactory is Ownable {
     // Event for when a new NFT contract is created
-    event NFTCreated(
-        address nftAddress,
-        string name,
-        string symbol,
-        string baseIPFSHash
-    );
+    event NFTCreated(address nftAddress, string name, string symbol, string baseIPFSHash);
 
     // Mapping to store created NFT contracts
     mapping(address => bool) public isNFTContract;
@@ -28,17 +23,13 @@ contract NFTFactory is Ownable {
      * @param baseIPFSHash Base IPFS hash for the collection metadata
      * @return address Address of the newly created NFT contract
      */
-    function createNFT(
-        string memory name,
-        string memory symbol,
-        string memory baseIPFSHash
-    ) public onlyOwner returns (address) {
+    function createNFT(string memory name, string memory symbol, string memory baseIPFSHash)
+        public
+        onlyOwner
+        returns (address)
+    {
         // Create new NFT contract with IPFS support
-        ConcertTicketNFT newNFT = new ConcertTicketNFT(
-            name,
-            symbol,
-            baseIPFSHash
-        );
+        ConcertTicketNFT newNFT = new ConcertTicketNFT(name, symbol, baseIPFSHash);
 
         // Store the contract address
         address nftAddress = address(newNFT);
@@ -80,10 +71,7 @@ contract NFTFactory is Ownable {
      * @param endIndex End index of the range
      * @return Array of NFT contract addresses within the specified range
      */
-    function getNFTsInRange(
-        uint256 startIndex,
-        uint256 endIndex
-    ) public view returns (address[] memory) {
+    function getNFTsInRange(uint256 startIndex, uint256 endIndex) public view returns (address[] memory) {
         require(startIndex < endIndex, "Invalid range");
         require(endIndex < allNFTs.length, "End index out of bounds");
 
@@ -95,5 +83,28 @@ contract NFTFactory is Ownable {
         }
 
         return nfts;
+    }
+
+    function computeNFTAddress(string memory name, string memory symbol, string memory baseIPFSHash)
+        public
+        view
+        returns (address)
+    {
+        bytes memory bytecode = type(ConcertTicketNFT).creationCode;
+        bytes32 salt = keccak256(abi.encodePacked(name, symbol, baseIPFSHash));
+        return address(
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            bytes1(0xff),
+                            address(this),
+                            salt,
+                            keccak256(abi.encodePacked(bytecode, abi.encode(name, symbol, baseIPFSHash)))
+                        )
+                    )
+                )
+            )
+        );
     }
 }

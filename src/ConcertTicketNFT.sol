@@ -20,21 +20,14 @@ contract ConcertTicketNFT is ERC721, ERC721URIStorage {
 
     event MetadataUpdated(uint256 tokenId, string ipfsHash);
 
-    constructor(
-        string memory name,
-        string memory symbol,
-        string memory baseIPFSHash
-    ) ERC721(name, symbol) {
+    constructor(string memory name, string memory symbol, string memory baseIPFSHash) ERC721(name, symbol) {
         _baseIPFSHash = baseIPFSHash;
     }
 
-    function safeMint(
-        address to,
-        uint256 concertId,
-        uint256 classIndex,
-        uint256 ticketNumber,
-        string memory ipfsHash
-    ) public returns (uint256) {
+    function safeMint(address to, uint256 concertId, uint256 classIndex, uint256 ticketNumber, string memory ipfsHash)
+        public
+        returns (uint256)
+    {
         _tokenIds++;
         uint256 newTokenId = _tokenIds;
 
@@ -56,18 +49,11 @@ contract ConcertTicketNFT is ERC721, ERC721URIStorage {
         return newTokenId;
     }
 
-    function tokenURI(
-        uint256 tokenId
-    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return
-            string(
-                abi.encodePacked("ipfs://", ticketMetadata[tokenId].ipfsHash)
-            );
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        return string(abi.encodePacked("ipfs://", ticketMetadata[tokenId].ipfsHash));
     }
 
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC721, ERC721URIStorage) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721URIStorage) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
