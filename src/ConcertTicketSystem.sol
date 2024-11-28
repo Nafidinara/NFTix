@@ -325,6 +325,10 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         return concerts[_concertId].ticketClasses[classIndex];
     }
 
+    function getConcertNFT(uint256 _concertId) public view returns (address) {
+        return concertNFTs[_concertId];
+    }
+
     function generateTokenURI(uint256 _concertId, uint256 _ticketClassIndex, uint256 _ticketNumber)
         internal
         pure

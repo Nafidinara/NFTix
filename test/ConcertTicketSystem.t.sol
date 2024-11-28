@@ -37,6 +37,7 @@ contract ConcertTicketSystemTest is Test {
     address public owner = address(this);
     address public user = address(0x2);
     address public reseller = address(0x3);
+    address public scammer = address (0x4);
     uint256 public concertId;
     string public baseIPFSHash = "QmTestHash"; // Sample IPFS hash
 
@@ -66,6 +67,14 @@ contract ConcertTicketSystemTest is Test {
         );
     }
 
+    function addUnresellableTicketClass() public{
+        _ticketClasses.push(
+            ConcertTicketSystem.TicketClass(
+                "VIP", 1 ether, 100, block.timestamp + 1 days, block.timestamp + 10 days, false, 2 ether
+            )
+        );
+    }
+
     function addConcert() public {
         concertId = 0;
         concertTicketSystem.addConcert(
@@ -79,6 +88,10 @@ contract ConcertTicketSystemTest is Test {
 
     function cancelConcert(uint256 _concertId) public {
         concertTicketSystem.cancelConcert(_concertId);
+    }
+
+    function resellTicket(uint256 _concertId, uint256 _tokenId, uint256 _price) public {
+        concertTicketSystem.resellTicket(_concertId, _tokenId, _price);
     }
 }
 
@@ -277,5 +290,122 @@ contract BuyTicketTest is ConcertTicketSystemTest {
         concertTicketSystem.buyTicket{value: 1 ether}(1, 0); // Pass the concert ID and ticket class index
 
         vm.stopPrank(); // Stop impersonating `user`
+    }
+}
+
+contract ResellTicketTest is ConcertTicketSystemTest {
+    function setUp() public override {
+        super.setUp();
+    }
+
+    //happy path
+    function test_ResellTicket() public {
+        // Step 1: Add a ticket class, concert and buy tickets
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
+
+
+        // Step 2: Approve ConcertTicketSystem to manage user's NFTs
+        address nftAddress = concertTicketSystem.getConcertNFT(1); // Use the getter function
+        ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
+        nft.setApprovalForAll(address(concertTicketSystem), true);
+
+        // Step 3: Expect emit event
+        vm.expectEmit(true, true, true, true);
+        emit TicketListedForResale(1, 1, 1 ether);
+
+        // Step 4: Call the resellTicket function
+        concertTicketSystem.resellTicket(1, 1, 1 ether);
+        vm.stopPrank(); // Stop impersonating `user`
+    }
+
+    function test_RevertIf_NotTicketOwner() public{
+        // Step 1: Add a ticket class, concert and buy tickets
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
+
+        // Step 2: Approve ConcertTicketSystem to manage user's NFTs
+        address nftAddress = concertTicketSystem.getConcertNFT(1); // Use the getter function
+        ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
+        nft.setApprovalForAll(address(concertTicketSystem), true);
+
+        //Step 3: Impersonate user 'scammer', expect revert
+        vm.startPrank(scammer);
+        vm.expectRevert("Not the ticket owner");
+        concertTicketSystem.resellTicket(1, 1, 1 ether);
+        vm.stopPrank();
+    }
+
+    function test_RevertIf_ExceedMaxPrice() public{
+        // Step 1: Add a ticket class, concert and buy tickets
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
+
+        // Step 2: Approve ConcertTicketSystem to manage user's NFTs
+        address nftAddress = concertTicketSystem.getConcertNFT(1); // Use the getter function
+        ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
+        nft.setApprovalForAll(address(concertTicketSystem), true);
+
+        //Step 3: Expect revert, price exceed maximum (2 ether)
+        vm.expectRevert("Price exceeds maximum allowed");
+        concertTicketSystem.resellTicket(1, 1, 3 ether);
+        vm.stopPrank();
+    }
+
+    function test_RevertIf_UnresellableTicket() public{
+        // Step 1: Add a unrellable ticket class, concert and buy tickets
+        addUnresellableTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
+
+        // Step 2: Approve ConcertTicketSystem to manage user's NFTs
+        address nftAddress = concertTicketSystem.getConcertNFT(1); // Use the getter function
+        ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
+        nft.setApprovalForAll(address(concertTicketSystem), true);
+
+        //Step 3: Expect revert, ticket cannot be resold
+        vm.expectRevert("This ticket cannot be resold");
+        concertTicketSystem.resellTicket(1, 1, 1 ether);
+        vm.stopPrank();
+    }
+
+    function test_RevertIf_PriceIsZero() public{
+        // Step 1: Add a ticket class, concert and buy tickets
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
+
+        // Step 2: Approve ConcertTicketSystem to manage user's NFTs
+        address nftAddress = concertTicketSystem.getConcertNFT(1); // Use the getter function
+        ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
+        nft.setApprovalForAll(address(concertTicketSystem), true);
+
+        //Step 3: Expect revert, price is 0
+        vm.expectRevert("Price must be greater than 0");
+        concertTicketSystem.resellTicket(1, 1, 0);
+        vm.stopPrank();
     }
 }
