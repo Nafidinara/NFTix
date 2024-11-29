@@ -7,55 +7,21 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol"; // Added for reentra
 import "./NFTFactory.sol";
 import "./ConcertTicketNFT.sol";
 
-event ConcertAdded(
-    uint256 concertId,
-    string artistName,
-    string venue,
-    uint256 date
-);
+event ConcertAdded(uint256 concertId, string artistName, string venue, uint256 date);
 
-event TicketClassAdded(
-    uint256 concertId,
-    string className,
-    uint256 price,
-    uint256 quantity
-);
+event TicketClassAdded(uint256 concertId, string className, uint256 price, uint256 quantity);
 
-event TicketPurchased(
-    uint256 indexed concertId,
-    uint256 indexed tokenId,
-    address buyer,
-    uint256 _ticketClassIndex
-);
+event TicketPurchased(uint256 indexed concertId, uint256 indexed tokenId, address buyer, uint256 _ticketClassIndex);
 
-event TicketListedForResale(
-    uint256 indexed concertId,
-    uint256 indexed tokenId,
-    uint256 price
-);
+event TicketListedForResale(uint256 indexed concertId, uint256 indexed tokenId, uint256 price);
 
-event TicketResold(
-    uint256 indexed concertId,
-    uint256 indexed tokenId,
-    address seller,
-    address buyer,
-    uint256 price
-);
+event TicketResold(uint256 indexed concertId, uint256 indexed tokenId, address seller, address buyer, uint256 price);
 
 event ConcertCancelled(uint256 indexed concertId);
 
-event RefundIssued(
-    uint256 indexed concertId,
-    address recipient,
-    uint256 amount
-);
+event RefundIssued(uint256 indexed concertId, address recipient, uint256 amount);
 
-event TicketClassRetrieved(
-    uint256 indexed concertId,
-    uint256 indexed tokenId,
-    uint256 classIndex,
-    string className
-);
+event TicketClassRetrieved(uint256 indexed concertId, uint256 indexed tokenId, uint256 classIndex, string className);
 
 event DebugCaller(address caller);
 
@@ -98,47 +64,17 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         bool isUsed;
     }
 
-    event ConcertAdded(
-        uint256 concertId,
-        string artistName,
-        string venue,
-        uint256 date
-    );
-    event TicketClassAdded(
-        uint256 concertId,
-        string className,
-        uint256 price,
-        uint256 quantity
-    );
-    event TicketPurchased(
-        uint256 indexed concertId,
-        uint256 indexed tokenId,
-        address buyer,
-        uint256 _ticketClassIndex
-    );
-    event TicketListedForResale(
-        uint256 indexed concertId,
-        uint256 indexed tokenId,
-        uint256 price
-    );
+    event ConcertAdded(uint256 concertId, string artistName, string venue, uint256 date);
+    event TicketClassAdded(uint256 concertId, string className, uint256 price, uint256 quantity);
+    event TicketPurchased(uint256 indexed concertId, uint256 indexed tokenId, address buyer, uint256 _ticketClassIndex);
+    event TicketListedForResale(uint256 indexed concertId, uint256 indexed tokenId, uint256 price);
     event TicketResold(
-        uint256 indexed concertId,
-        uint256 indexed tokenId,
-        address seller,
-        address buyer,
-        uint256 price
+        uint256 indexed concertId, uint256 indexed tokenId, address seller, address buyer, uint256 price
     );
     event ConcertCancelled(uint256 indexed concertId);
-    event RefundIssued(
-        uint256 indexed concertId,
-        address recipient,
-        uint256 amount
-    );
+    event RefundIssued(uint256 indexed concertId, address recipient, uint256 amount);
     event TicketClassRetrieved(
-        uint256 indexed concertId,
-        uint256 indexed tokenId,
-        uint256 classIndex,
-        string className
+        uint256 indexed concertId, uint256 indexed tokenId, uint256 classIndex, string className
     );
     event DebugCaller(address caller);
 
@@ -148,10 +84,7 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
     }
 
     modifier concertExists(uint256 _concertId) {
-        require(
-            _concertId > 0 && _concertId <= _concertIds,
-            "Concert does not exist"
-        );
+        require(_concertId > 0 && _concertId <= _concertIds, "Concert does not exist");
         require(concerts[_concertId].isActive, "Concert is not active");
         _;
     }
@@ -173,10 +106,7 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         require(bytes(_artistName).length > 0, "Artist name cannot be empty");
         require(bytes(_venue).length > 0, "Venue cannot be empty");
         require(_date > block.timestamp, "Concert date must be in the future");
-        require(
-            _ticketClasses.length > 0,
-            "Must have at least one ticket class"
-        );
+        require(_ticketClasses.length > 0, "Must have at least one ticket class");
         require(bytes(baseIPFSHash).length > 0, "IPFS hash cannot be empty");
 
         _concertIds++;
@@ -189,51 +119,27 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         concerts[newConcertId].isActive = true;
 
         for (uint256 i = 0; i < _ticketClasses.length; i++) {
-            require(
-                _ticketClasses[i].price > 0,
-                "Ticket price must be greater than 0"
-            );
-            require(
-                _ticketClasses[i].quantity > 0,
-                "Ticket quantity must be greater than 0"
-            );
-            require(
-                _ticketClasses[i].startBuy < _ticketClasses[i].endBuy,
-                "Invalid buying period"
-            );
-            require(
-                _ticketClasses[i].endBuy < _date,
-                "Buying period must end before concert"
-            );
+            require(_ticketClasses[i].price > 0, "Ticket price must be greater than 0");
+            require(_ticketClasses[i].quantity > 0, "Ticket quantity must be greater than 0");
+            require(_ticketClasses[i].startBuy < _ticketClasses[i].endBuy, "Invalid buying period");
+            require(_ticketClasses[i].endBuy < _date, "Buying period must end before concert");
 
             concerts[newConcertId].ticketClasses.push(_ticketClasses[i]);
             emit TicketClassAdded(
-                newConcertId,
-                _ticketClasses[i].name,
-                _ticketClasses[i].price,
-                _ticketClasses[i].quantity
+                newConcertId, _ticketClasses[i].name, _ticketClasses[i].price, _ticketClasses[i].quantity
             );
         }
 
-        string memory nftName = string(
-            abi.encodePacked(_artistName, " - ", _venue, " Tickets")
-        );
+        string memory nftName = string(abi.encodePacked(_artistName, " - ", _venue, " Tickets"));
 
         // Updated NFT creation with baseIPFSHash
-        address nftAddress = nftFactory.createNFT(
-            nftName,
-            symbol,
-            baseIPFSHash
-        );
+        address nftAddress = nftFactory.createNFT(nftName, symbol, baseIPFSHash);
         concertNFTs[newConcertId] = nftAddress;
 
         emit ConcertAdded(newConcertId, _artistName, _venue, _date);
     }
 
-    function buyTicket(
-        uint256 _concertId,
-        uint256 _ticketClassIndex
-    )
+    function buyTicket(uint256 _concertId, uint256 _ticketClassIndex)
         public
         payable
         nonReentrant
@@ -242,19 +148,11 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         notCancelled(_concertId)
     {
         Concert storage concert = concerts[_concertId];
-        require(
-            _ticketClassIndex < concert.ticketClasses.length,
-            "Invalid ticket class"
-        );
+        require(_ticketClassIndex < concert.ticketClasses.length, "Invalid ticket class");
 
-        TicketClass storage ticketClass = concert.ticketClasses[
-            _ticketClassIndex
-        ];
+        TicketClass storage ticketClass = concert.ticketClasses[_ticketClassIndex];
 
-        require(
-            block.timestamp >= ticketClass.startBuy,
-            "Ticket sale has not started"
-        );
+        require(block.timestamp >= ticketClass.startBuy, "Ticket sale has not started");
         require(block.timestamp <= ticketClass.endBuy, "Ticket sale has ended");
         require(msg.value == ticketClass.price, "Incorrect payment amount");
         require(ticketClass.quantity > 0, "Sold out");
@@ -264,20 +162,10 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
 
         // Get the IPFS hash for this ticket from your mapping or generate it
-        string memory ipfsHash = getIPFSHashForTicket(
-            _concertId,
-            _ticketClassIndex,
-            ticketClass.quantity
-        );
+        string memory ipfsHash = getIPFSHashForTicket(_concertId, _ticketClassIndex, ticketClass.quantity);
 
         // Mint the NFT with metadata
-        uint256 tokenId = nft.safeMint(
-            msg.sender,
-            _concertId,
-            _ticketClassIndex,
-            ticketClass.quantity,
-            ipfsHash
-        );
+        uint256 tokenId = nft.safeMint(msg.sender, _concertId, _ticketClassIndex, ticketClass.quantity, ipfsHash);
 
         ticketClass.quantity--;
 
@@ -290,20 +178,15 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
             isUsed: false
         });
 
-        emit TicketPurchased(
-            _concertId,
-            tokenId,
-            msg.sender,
-            _ticketClassIndex
-        );
+        emit TicketPurchased(_concertId, tokenId, msg.sender, _ticketClassIndex);
     }
 
     // Add this function to handle IPFS hash retrieval
-    function getIPFSHashForTicket(
-        uint256 _concertId,
-        uint256 _ticketClassIndex,
-        uint256 _ticketNumber
-    ) internal pure returns (string memory) {
+    function getIPFSHashForTicket(uint256 _concertId, uint256 _ticketClassIndex, uint256 _ticketNumber)
+        internal
+        pure
+        returns (string memory)
+    {
         // In production, you would either:
         // 1. Store and retrieve the hash from a mapping
         // 2. Generate the hash deterministically
@@ -313,11 +196,11 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         return "QmYourIPFSHash";
     }
 
-    function resellTicket(
-        uint256 _concertId,
-        uint256 _tokenId,
-        uint256 _price
-    ) public concertExists(_concertId) notCancelled(_concertId) {
+    function resellTicket(uint256 _concertId, uint256 _tokenId, uint256 _price)
+        public
+        concertExists(_concertId)
+        notCancelled(_concertId)
+    {
         Concert storage concert = concerts[_concertId];
         ConcertTicketNFT nft = ConcertTicketNFT(concertNFTs[_concertId]);
 
@@ -329,10 +212,7 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         TicketClass storage ticketClass = concert.ticketClasses[originalClass];
 
         require(ticketClass.isResellable, "This ticket cannot be resold");
-        require(
-            _price <= ticketClass.maxResalePrice,
-            "Price exceeds maximum allowed"
-        );
+        require(_price <= ticketClass.maxResalePrice, "Price exceeds maximum allowed");
 
         nft.approve(address(this), _tokenId);
         ticketResalePrices[_concertId][_tokenId] = _price;
@@ -340,10 +220,7 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         emit TicketListedForResale(_concertId, _tokenId, _price);
     }
 
-    function buyResoldTicket(
-        uint256 _concertId,
-        uint256 _tokenId
-    )
+    function buyResoldTicket(uint256 _concertId, uint256 _tokenId)
         public
         payable
         nonReentrant
@@ -374,35 +251,24 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         emit TicketResold(_concertId, _tokenId, seller, msg.sender, price);
     }
 
-    function cancelConcert(
-        uint256 _concertId
-    ) public concertExists(_concertId) {
+    function cancelConcert(uint256 _concertId) public concertExists(_concertId) {
         require(!concertCancelled[_concertId], "Concert already cancelled");
         concertCancelled[_concertId] = true;
         emit ConcertCancelled(_concertId);
     }
 
-    function claimRefund(
-        uint256 _concertId,
-        uint256 _tokenId
-    ) public nonReentrant {
+    function claimRefund(uint256 _concertId, uint256 _tokenId) public nonReentrant {
         require(concertCancelled[_concertId], "Concert not cancelled");
 
         ConcertTicketNFT nft = ConcertTicketNFT(concertNFTs[_concertId]);
         require(nft.ownerOf(_tokenId) == msg.sender, "Not ticket owner");
 
         uint256 ticketClass = getTicketClassIndex(_concertId, _tokenId);
-        uint256 refundAmount = concerts[_concertId]
-            .ticketClasses[ticketClass]
-            .price;
+        uint256 refundAmount = concerts[_concertId].ticketClasses[ticketClass].price;
 
         // Approve transfer to dead address
         nft.approve(address(this), _tokenId);
-        nft.safeTransferFrom(
-            msg.sender,
-            address(0x000000000000000000000000000000000000dEaD),
-            _tokenId
-        );
+        nft.safeTransferFrom(msg.sender, address(0x000000000000000000000000000000000000dEaD), _tokenId);
 
         // Issue refund
         payable(msg.sender).transfer(refundAmount);
@@ -410,11 +276,7 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         emit RefundIssued(_concertId, msg.sender, refundAmount);
     }
 
-    function verifyTicket(
-        uint256 _concertId,
-        uint256 _tokenId,
-        address _attendee
-    )
+    function verifyTicket(uint256 _concertId, uint256 _tokenId, address _attendee)
         public
         view
         concertExists(_concertId)
@@ -431,42 +293,25 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
      * @param _tokenId The ID of the ticket token
      * @return uint256 The ticket class index
      */
-    function getTicketClassIndex(
-        uint256 _concertId,
-        uint256 _tokenId
-    ) public view returns (uint256) {
+    function getTicketClassIndex(uint256 _concertId, uint256 _tokenId) public view returns (uint256) {
         // Check if concert exists
-        require(
-            _concertId > 0 && _concertId <= _concertIds,
-            "Concert does not exist"
-        );
+        require(_concertId > 0 && _concertId <= _concertIds, "Concert does not exist");
         require(concerts[_concertId].isActive, "Concert is not active");
 
         // Get ticket details
         TicketDetails memory details = ticketDetails[_concertId][_tokenId];
         require(details.isValid, "Invalid ticket");
-        require(
-            details.concertId == _concertId,
-            "Ticket does not belong to this concert"
-        );
+        require(details.concertId == _concertId, "Ticket does not belong to this concert");
 
         // Get concert and validate ticket class index
         Concert storage concert = concerts[_concertId];
-        require(
-            details.ticketClassIndex < concert.ticketClasses.length,
-            "Invalid ticket class index"
-        );
+        require(details.ticketClassIndex < concert.ticketClasses.length, "Invalid ticket class index");
 
         return details.ticketClassIndex;
     }
 
-    function getConcertTicketClasses(
-        uint256 _concertId
-    ) public view returns (TicketClass[] memory) {
-        require(
-            _concertId > 0 && _concertId <= _concertIds,
-            "Concert does not exist"
-        );
+    function getConcertTicketClasses(uint256 _concertId) public view returns (TicketClass[] memory) {
+        require(_concertId > 0 && _concertId <= _concertIds, "Concert does not exist");
         return concerts[_concertId].ticketClasses;
     }
 
@@ -476,10 +321,7 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
      * @param _tokenId The ID of the ticket token
      * @return TicketClass The ticket class details
      */
-    function getTicketClass(
-        uint256 _concertId,
-        uint256 _tokenId
-    ) public view returns (TicketClass memory) {
+    function getTicketClass(uint256 _concertId, uint256 _tokenId) public view returns (TicketClass memory) {
         uint256 classIndex = getTicketClassIndex(_concertId, _tokenId);
         return concerts[_concertId].ticketClasses[classIndex];
     }
@@ -488,22 +330,21 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         return concertNFTs[_concertId];
     }
 
-    function generateTokenURI(
-        uint256 _concertId,
-        uint256 _ticketClassIndex,
-        uint256 _ticketNumber
-    ) internal pure returns (string memory) {
-        return
-            string(
-                abi.encodePacked(
-                    "https://api.yourticketservice.com/metadata/",
-                    toString(_concertId),
-                    "/",
-                    toString(_ticketClassIndex),
-                    "/",
-                    toString(_ticketNumber)
-                )
-            );
+    function generateTokenURI(uint256 _concertId, uint256 _ticketClassIndex, uint256 _ticketNumber)
+        internal
+        pure
+        returns (string memory)
+    {
+        return string(
+            abi.encodePacked(
+                "https://api.yourticketservice.com/metadata/",
+                toString(_concertId),
+                "/",
+                toString(_ticketClassIndex),
+                "/",
+                toString(_ticketNumber)
+            )
+        );
     }
 
     function toString(uint256 value) internal pure returns (string memory) {
