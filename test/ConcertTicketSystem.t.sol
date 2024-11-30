@@ -11,25 +11,64 @@ import {Test, console} from "forge-std/Test.sol";
 import {Counter} from "../src/Counter.sol";
 import {ConcertTicketSystem} from "../src/ConcertTicketSystem.sol";
 
-event ConcertAdded(uint256 concertId, string artistName, string venue, uint256 date);
+event ConcertAdded(
+    uint256 concertId,
+    string artistName,
+    string venue,
+    uint256 date
+);
 
-event TicketClassAdded(uint256 concertId, string className, uint256 price, uint256 quantity);
+event TicketClassAdded(
+    uint256 concertId,
+    string className,
+    uint256 price,
+    uint256 quantity
+);
 
-event TicketListedForResale(uint256 indexed concertId, uint256 indexed tokenId, uint256 price);
+event TicketListedForResale(
+    uint256 indexed concertId,
+    uint256 indexed tokenId,
+    uint256 price
+);
 
 event ConcertCancelled(uint256 indexed concertId);
 
-event TicketClassRetrieved(uint256 indexed concertId, uint256 indexed tokenId, uint256 classIndex, string className);
+event TicketClassRetrieved(
+    uint256 indexed concertId,
+    uint256 indexed tokenId,
+    uint256 classIndex,
+    string className
+);
 
 event DebugCaller(address caller);
 
-event NFTCreated(address nftAddress, string name, string symbol, string baseIPFSHash);
+event NFTCreated(
+    address nftAddress,
+    string name,
+    string symbol,
+    string baseIPFSHash
+);
 
-event TicketPurchased(uint256 indexed concertId, uint256 indexed tokenId, address buyer, uint256 _ticketClassIndex);
+event TicketPurchased(
+    uint256 indexed concertId,
+    uint256 indexed tokenId,
+    address buyer,
+    uint256 _ticketClassIndex
+);
 
-event TicketResold(uint256 indexed concertId, uint256 indexed tokenId, address seller, address buyer, uint256 price);
+event TicketResold(
+    uint256 indexed concertId,
+    uint256 indexed tokenId,
+    address seller,
+    address buyer,
+    uint256 price
+);
 
-event RefundIssued(uint256 indexed concertId, address recipient, uint256 amount);
+event RefundIssued(
+    uint256 indexed concertId,
+    address recipient,
+    uint256 amount
+);
 
 contract ConcertTicketSystemTest is Test {
     ConcertTicketSystem public concertTicketSystem;
@@ -62,7 +101,13 @@ contract ConcertTicketSystemTest is Test {
     function addTicketClass() public {
         _ticketClasses.push(
             ConcertTicketSystem.TicketClass(
-                "VIP", 1 ether, 100, block.timestamp + 1 days, block.timestamp + 10 days, true, 2 ether
+                "VIP",
+                1 ether,
+                100,
+                block.timestamp + 1 days,
+                block.timestamp + 10 days,
+                true,
+                2 ether
             )
         );
     }
@@ -70,7 +115,13 @@ contract ConcertTicketSystemTest is Test {
     function addUnresellableTicketClass() public {
         _ticketClasses.push(
             ConcertTicketSystem.TicketClass(
-                "VIP", 1 ether, 100, block.timestamp + 1 days, block.timestamp + 10 days, false, 2 ether
+                "VIP",
+                1 ether,
+                100,
+                block.timestamp + 1 days,
+                block.timestamp + 10 days,
+                false,
+                2 ether
             )
         );
     }
@@ -78,11 +129,19 @@ contract ConcertTicketSystemTest is Test {
     function addConcert() public {
         concertId = 0;
         concertTicketSystem.addConcert(
-            "Artist Name", "Venue Name", block.timestamp + 20 days, "ART", baseIPFSHash, _ticketClasses
+            "Artist Name",
+            "Venue Name",
+            block.timestamp + 20 days,
+            "ART",
+            baseIPFSHash,
+            _ticketClasses
         );
     }
 
-    function buyTicket(uint256 _concertId, uint256 _ticketClassIndex) public payable {
+    function buyTicket(
+        uint256 _concertId,
+        uint256 _ticketClassIndex
+    ) public payable {
         concertTicketSystem.buyTicket(_concertId, _ticketClassIndex);
     }
 
@@ -90,7 +149,11 @@ contract ConcertTicketSystemTest is Test {
         concertTicketSystem.cancelConcert(_concertId);
     }
 
-    function resellTicket(uint256 _concertId, uint256 _tokenId, uint256 _price) public {
+    function resellTicket(
+        uint256 _concertId,
+        uint256 _tokenId,
+        uint256 _price
+    ) public {
         concertTicketSystem.resellTicket(_concertId, _tokenId, _price);
     }
 }
@@ -118,7 +181,12 @@ contract AddConcertTest is ConcertTicketSystemTest {
 
         // Expect ConcertAdded event
         vm.expectEmit(true, true, true, true);
-        emit ConcertAdded(1, "Artist Name", "Venue Name", block.timestamp + 20 days);
+        emit ConcertAdded(
+            1,
+            "Artist Name",
+            "Venue Name",
+            block.timestamp + 20 days
+        );
 
         // Define parameters for the test
         addTicketClass();
@@ -138,7 +206,14 @@ contract AddConcertTest is ConcertTicketSystemTest {
         vm.startPrank(owner);
         addTicketClass();
         vm.expectRevert("Artist name cannot be empty");
-        concertTicketSystem.addConcert("", "Venue Name", block.timestamp + 20 days, "ART", baseIPFSHash, _ticketClasses);
+        concertTicketSystem.addConcert(
+            "",
+            "Venue Name",
+            block.timestamp + 20 days,
+            "ART",
+            baseIPFSHash,
+            _ticketClasses
+        );
         vm.stopPrank();
     }
 
@@ -147,7 +222,12 @@ contract AddConcertTest is ConcertTicketSystemTest {
         addTicketClass();
         vm.expectRevert("Venue cannot be empty");
         concertTicketSystem.addConcert(
-            "Artist Name", "", block.timestamp + 20 days, "ART", baseIPFSHash, _ticketClasses
+            "Artist Name",
+            "",
+            block.timestamp + 20 days,
+            "ART",
+            baseIPFSHash,
+            _ticketClasses
         );
         vm.stopPrank();
     }
@@ -156,7 +236,14 @@ contract AddConcertTest is ConcertTicketSystemTest {
         vm.startPrank(owner);
         addTicketClass();
         vm.expectRevert("Concert date must be in the future");
-        concertTicketSystem.addConcert("Artist Name", "Venue Name", 1, "ART", baseIPFSHash, _ticketClasses);
+        concertTicketSystem.addConcert(
+            "Artist Name",
+            "Venue Name",
+            1,
+            "ART",
+            baseIPFSHash,
+            _ticketClasses
+        );
         vm.stopPrank();
     }
 
@@ -164,7 +251,12 @@ contract AddConcertTest is ConcertTicketSystemTest {
         vm.startPrank(owner);
         vm.expectRevert("Must have at least one ticket class");
         concertTicketSystem.addConcert(
-            "Artist Name", "Venue Name", block.timestamp + 20 days, "ART", baseIPFSHash, _emptyTicketClasses
+            "Artist Name",
+            "Venue Name",
+            block.timestamp + 20 days,
+            "ART",
+            baseIPFSHash,
+            _emptyTicketClasses
         );
         vm.stopPrank();
     }
@@ -174,7 +266,12 @@ contract AddConcertTest is ConcertTicketSystemTest {
         vm.startPrank(owner);
         vm.expectRevert("IPFS hash cannot be empty");
         concertTicketSystem.addConcert(
-            "Artist Name", "Venue Name", block.timestamp + 20 days, "ART", "", _ticketClasses
+            "Artist Name",
+            "Venue Name",
+            block.timestamp + 20 days,
+            "ART",
+            "",
+            _ticketClasses
         );
         vm.stopPrank();
     }
@@ -417,40 +514,59 @@ contract BuyResoldTicketTest is ConcertTicketSystemTest {
 
     //happy path
     function test_BuyResoldTicket() public {
-        // Step 1: Add a ticket class and concert
+        // Step 1: Assign the owner
+        address mockOwner = address(0x123);
+        vm.prank(owner); // Simulate contract deployment by the owner
+        concertTicketSystem.transferOwnership(mockOwner);
+
+        // Step 2: Simulate the owner as a payable address
+        vm.deal(mockOwner, 0 ether); // Ensure the owner starts with 0 Ether
+        vm.startPrank(mockOwner);
+        payable(mockOwner).call{value: 0}(""); // Mock the owner as a payable recipient
+        vm.stopPrank();
+
+        // Step 3: Proceed with the rest of the test
         addTicketClass();
         vm.prank(owner);
         addConcert();
 
-        // Step 2: Simulate ticket purchase by `user`
-        vm.startPrank(user); // Simulate `user` as the caller
-        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
-        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+        // Simulate ticket purchase by `user`
+        vm.startPrank(user);
+        vm.warp(_ticketClasses[0].startBuy);
+        vm.deal(user, 1 ether);
         concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
 
-        // Step 3: Approve the ConcertTicketSystem to manage user's NFTs
-        address nftAddress = concertTicketSystem.getConcertNFT(1); // Fetch the NFT contract address
+        // Approve the ConcertTicketSystem to manage user's NFTs
+        address nftAddress = concertTicketSystem.getConcertNFT(1);
         ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
         nft.setApprovalForAll(address(concertTicketSystem), true);
 
-        // Step 4: List the ticket for resale
+        // List the ticket for resale
         uint256 resalePrice = 1 ether;
-        vm.expectEmit(true, true, true, true); // Expect the TicketListedForResale event
+        vm.expectEmit(true, true, true, true);
         emit TicketListedForResale(1, 1, resalePrice);
         concertTicketSystem.resellTicket(1, 1, resalePrice);
 
-        // Step 5: Simulate ticket resale by `reseller`
-        vm.stopPrank(); // Stop impersonating `user`
-        vm.startPrank(reseller); // Start impersonating `reseller`
-        vm.deal(reseller, 2 ether); // Fund the `reseller` address with 1 ether
+        // Simulate ticket resale by `reseller`
+        vm.stopPrank();
+        vm.startPrank(reseller);
+        vm.deal(reseller, 2 ether);
 
-        // Step 6: Buy Resold Ticket
-        vm.expectEmit(true, true, true, true); // Expect the TicketResold event
+        // Buy Resold Ticket
+        vm.expectEmit(true, true, true, true);
         emit TicketResold(1, 1, user, reseller, resalePrice);
         concertTicketSystem.buyResoldTicket{value: resalePrice}(1, 1);
 
         // Stop impersonating
         vm.stopPrank();
+
+        // Verify fee distribution
+        uint256 ownerBalance = mockOwner.balance;
+        assertEq(
+            ownerBalance,
+            (resalePrice * 5) / 100,
+            "Fee not transferred correctly"
+        );
     }
 
     //unhappy path
