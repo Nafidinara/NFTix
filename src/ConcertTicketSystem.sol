@@ -266,8 +266,7 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
         uint256 ticketClass = getTicketClassIndex(_concertId, _tokenId);
         uint256 refundAmount = concerts[_concertId].ticketClasses[ticketClass].price;
 
-        // Approve transfer to dead address
-        nft.approve(address(this), _tokenId);
+        // Directly transfer the NFT to the dead address
         nft.safeTransferFrom(msg.sender, address(0x000000000000000000000000000000000000dEaD), _tokenId);
 
         // Issue refund
