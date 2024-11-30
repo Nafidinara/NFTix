@@ -6,10 +6,13 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../src/NFTFactory.sol";
 import "../src/ConcertTicketNFT.sol";
+import "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 import {Test, console} from "forge-std/Test.sol";
 import {Counter} from "../src/Counter.sol";
 import {ConcertTicketSystem} from "../src/ConcertTicketSystem.sol";
+
+error ERC721NonexistentToken(uint256 tokenId);
 
 event ConcertAdded(uint256 concertId, string artistName, string venue, uint256 date);
 
@@ -697,6 +700,169 @@ contract ClaimRefundTest is ConcertTicketSystemTest {
         vm.startPrank(scammer);
         vm.expectRevert("Not ticket owner");
         concertTicketSystem.claimRefund(1, 1);
+        vm.stopPrank();
+    }
+}
+
+contract VerifyTicketTest is ConcertTicketSystemTest {
+    function setUp() public override {
+        super.setUp();
+    }
+
+    //happy path
+    function test_VerifyTicket() public {
+        // Step 1: Add a ticket class and concert
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+
+        // Step 2: Simulate user buying the ticket
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+
+        // Step 3: Call the buyTicket function with 1 ether as msg.value
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0); // Pass the concert ID and ticket class index
+
+        // Step 4: Verify ticket
+        bool isValid = concertTicketSystem.verifyTicket(1, 1, user);
+        assertEq(isValid, true);
+        vm.stopPrank(); // Stop impersonating `user`
+    }
+
+    function testVerifyTicketNotExist() public {
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.warp(_ticketClasses[0].startBuy);
+        vm.expectRevert(abi.encodeWithSelector(ERC721NonexistentToken.selector, 2));
+        concertTicketSystem.verifyTicket(1, 2, user);
+    }
+
+    function test_RevertIf_NotTicketOwner() public {
+        // Step 1: Add a ticket class and concert
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+
+        // Step 2: Simulate user and a random address buying the ticket
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+
+        // Step 3: Call the buyTicket function with 1 ether as msg.value
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0); // Pass the concert ID and ticket class index
+
+        // Step 4: Verify ticket
+        bool isValid = concertTicketSystem.verifyTicket(1, 1, address(0x123));
+        assertEq(isValid, false);
+        vm.stopPrank(); // Stop impersonating `user`
+    }
+
+    function test_RevertIf_ConcertCancelled() public {
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.warp(_ticketClasses[0].startBuy);
+        cancelConcert(1);
+
+        vm.expectRevert("Concert has been cancelled");
+        concertTicketSystem.verifyTicket(1, 1, user);
+    }
+
+    function test_RevertIf_ConcertNotExist() public {
+        addTicketClass();
+        vm.expectRevert("Concert does not exist");
+        concertTicketSystem.verifyTicket(1, 1, user);
+    }
+
+    function test_RevertIf_WrongConcert() public {
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        concertTicketSystem.addConcert(
+            "Artist Name2", "Venue Name", block.timestamp + 20 days, "ART", "baseIPFSHash", _ticketClasses
+        );
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+
+        // Step 2: Simulate user and a random address buying the ticket
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+
+        // Step 3: Call the buyTicket function with 1 ether as msg.value
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
+        vm.expectRevert(abi.encodeWithSelector(ERC721NonexistentToken.selector, 1));
+        concertTicketSystem.verifyTicket(2, 1, user);
+        vm.stopPrank(); // Stop impersonating `user
+    }
+}
+
+contract EmergencyPauseTest is ConcertTicketSystemTest {
+    function setUp() public override {
+        super.setUp();
+    }
+
+    function test_RevertIf_BuyTicketWhenPaused() public {
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+        vm.warp(_ticketClasses[0].startBuy); // Set the block timestamp to startBuy
+        concertTicketSystem.pause();
+
+        // Step 2: Simulate user and a random address buying the ticket
+        vm.startPrank(user); // Simulate `user` as the caller
+        vm.deal(user, 1 ether); // Fund the `user` address with 1 ether
+
+        // Step 3: Call the buyTicket function with 1 ether as msg.value
+        vm.expectRevert();
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
+        vm.stopPrank();
+    }
+
+    function test_RevertIf_BuyResoldTicketWhenPaused() public {
+        // Step 1: Assign the owner
+        address mockOwner = address(0x123);
+        vm.prank(owner); // Simulate contract deployment by the owner
+        concertTicketSystem.transferOwnership(mockOwner);
+
+        // Step 2: Simulate the owner as a payable address
+        vm.deal(mockOwner, 0 ether); // Ensure the owner starts with 0 Ether
+        vm.startPrank(mockOwner);
+        payable(mockOwner).call{value: 0}(""); // Mock the owner as a payable recipient
+        vm.stopPrank();
+
+        // Step 3: Proceed with the rest of the test
+        addTicketClass();
+        vm.prank(owner);
+        addConcert();
+
+        // Simulate ticket purchase by `user`
+        vm.startPrank(user);
+        vm.warp(_ticketClasses[0].startBuy);
+        vm.deal(user, 1 ether);
+        concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
+
+        // Approve the ConcertTicketSystem to manage user's NFTs
+        address nftAddress = concertTicketSystem.getConcertNFT(1);
+        ConcertTicketNFT nft = ConcertTicketNFT(nftAddress);
+        nft.setApprovalForAll(address(concertTicketSystem), true);
+
+        // List the ticket for resale
+        uint256 resalePrice = 1 ether;
+        concertTicketSystem.resellTicket(1, 1, resalePrice);
+
+        // Simulate ticket resale by `reseller`
+        vm.stopPrank();
+        //pause system
+        concertTicketSystem.pause();
+        vm.startPrank(reseller);
+        vm.deal(reseller, 2 ether);
+
+        // Buy Resold Ticket
+        vm.expectRevert();
+        concertTicketSystem.buyResoldTicket{value: resalePrice}(1, 1);
+
+        // Stop impersonating
         vm.stopPrank();
     }
 }
