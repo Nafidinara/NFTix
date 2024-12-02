@@ -3,12 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.1",
+    "@headlessui/react": "^2.2.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@web3-react/core": "^8.2.3",
+    "@web3-react/injected-connector": "^6.0.7",
+    "bootstrap": "^5.3.3",
+    "ethers": "^6.13.4",
+    "jquery": "^3.7.1",
+    "magnific-popup": "^1.2.0",
+    "owl.carousel": "^2.3.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^7.0.1",
     "react-scripts": "5.0.1",
+    "tailwindcss": "^3.4.15",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
