@@ -201,7 +201,10 @@ contract ConcertTicketSystem is Ownable, Pausable, ReentrancyGuard {
 
         require(block.timestamp >= concert.startBuy, "Ticket sale has not started");
         require(block.timestamp <= concert.endBuy, "Ticket sale has ended");
-        require(msg.value == ticketClass.price, "Incorrect payment amount");
+        require(
+            msg.value >= ticketClass.price && msg.value <= (ticketClass.price * 15) / 10,
+            "Payment outside acceptable range"
+        );
         require(ticketClass.quantity > 0, "Sold out");
 
         // Get the NFT contract
