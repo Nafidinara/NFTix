@@ -14,63 +14,23 @@ import {ConcertTicketSystem} from "../src/ConcertTicketSystem.sol";
 
 error ERC721NonexistentToken(uint256 tokenId);
 
-event ConcertAdded(
-    uint256 concertId,
-    string concertName,
-    string artistName,
-    string venue,
-    uint256 date
-);
+event ConcertAdded(uint256 concertId, string concertName, string artistName, string venue, uint256 date);
 
-event TicketClassAdded(
-    uint256 concertId,
-    string className,
-    uint256 price,
-    uint256 quantity
-);
+event TicketClassAdded(uint256 concertId, string className, uint256 price, uint256 quantity);
 
-event TicketListedForResale(
-    uint256 indexed concertId,
-    uint256 indexed tokenId,
-    uint256 price
-);
+event TicketListedForResale(uint256 indexed concertId, uint256 indexed tokenId, uint256 price);
 
 event ConcertCancelled(uint256 indexed concertId);
 
-event TicketClassRetrieved(
-    uint256 indexed concertId,
-    uint256 indexed tokenId,
-    uint256 classIndex,
-    string className
-);
+event TicketClassRetrieved(uint256 indexed concertId, uint256 indexed tokenId, uint256 classIndex, string className);
 
-event NFTCreated(
-    address nftAddress,
-    string name,
-    string symbol,
-    string baseIPFSHash
-);
+event NFTCreated(address nftAddress, string name, string symbol, string baseIPFSHash);
 
-event TicketPurchased(
-    uint256 indexed concertId,
-    uint256 indexed tokenId,
-    address buyer,
-    uint256 _ticketClassIndex
-);
+event TicketPurchased(uint256 indexed concertId, uint256 indexed tokenId, address buyer, uint256 _ticketClassIndex);
 
-event TicketResold(
-    uint256 indexed concertId,
-    uint256 indexed tokenId,
-    address seller,
-    address buyer,
-    uint256 price
-);
+event TicketResold(uint256 indexed concertId, uint256 indexed tokenId, address seller, address buyer, uint256 price);
 
-event RefundIssued(
-    uint256 indexed concertId,
-    address recipient,
-    uint256 amount
-);
+event RefundIssued(uint256 indexed concertId, address recipient, uint256 amount);
 
 contract ConcertTicketSystemTest is Test {
     ConcertTicketSystem public concertTicketSystem;
@@ -103,13 +63,7 @@ contract ConcertTicketSystemTest is Test {
     function addTicketClass() public {
         _ticketClasses.push(
             ConcertTicketSystem.TicketClass(
-                "VIP",
-                1 ether,
-                100,
-                true,
-                2 ether,
-                "https://www.thumbnailurl.com",
-                "https://www.backgroundurl.com"
+                "VIP", 1 ether, 100, true, 2 ether, "https://www.thumbnailurl.com", "https://www.backgroundurl.com"
             )
         );
     }
@@ -117,13 +71,7 @@ contract ConcertTicketSystemTest is Test {
     function addUnresellableTicketClass() public {
         _ticketClasses.push(
             ConcertTicketSystem.TicketClass(
-                "VIP",
-                1 ether,
-                100,
-                false,
-                2 ether,
-                "https://www.thumbnailurl.com",
-                "https://www.backgroundurl.com"
+                "VIP", 1 ether, 100, false, 2 ether, "https://www.thumbnailurl.com", "https://www.backgroundurl.com"
             )
         );
     }
@@ -144,10 +92,7 @@ contract ConcertTicketSystemTest is Test {
         );
     }
 
-    function buyTicket(
-        uint256 _concertId,
-        uint256 _ticketClassIndex
-    ) public payable {
+    function buyTicket(uint256 _concertId, uint256 _ticketClassIndex) public payable {
         concertTicketSystem.buyTicket(_concertId, _ticketClassIndex);
     }
 
@@ -155,11 +100,7 @@ contract ConcertTicketSystemTest is Test {
         concertTicketSystem.cancelConcert(_concertId);
     }
 
-    function resellTicket(
-        uint256 _concertId,
-        uint256 _tokenId,
-        uint256 _price
-    ) public {
+    function resellTicket(uint256 _concertId, uint256 _tokenId, uint256 _price) public {
         concertTicketSystem.resellTicket(_concertId, _tokenId, _price);
     }
 }
@@ -171,21 +112,12 @@ contract AddConcertTest is ConcertTicketSystemTest {
         address expectedNftAddress = address(0);
         vm.expectEmit(true, true, true, true);
         emit NFTCreated(
-            0x104fBc016F4bb334D775a19E8A6510109AC63E00,
-            "Artist Name - Venue Name Tickets",
-            "ART",
-            "QmTestHash"
+            0x104fBc016F4bb334D775a19E8A6510109AC63E00, "Artist Name - Venue Name Tickets", "ART", "QmTestHash"
         );
 
         // Expect ConcertAdded event
         vm.expectEmit(true, true, true, true);
-        emit ConcertAdded(
-            1,
-            "Concert Name",
-            "Artist Name",
-            "Venue Name",
-            block.timestamp + 20 days
-        );
+        emit ConcertAdded(1, "Concert Name", "Artist Name", "Venue Name", block.timestamp + 20 days);
 
         // Define parameters for the test
         addTicketClass();
@@ -581,11 +513,7 @@ contract BuyResoldTicketTest is ConcertTicketSystemTest {
 
         // Verify fee distribution
         uint256 ownerBalance = mockOwner.balance;
-        assertEq(
-            ownerBalance,
-            (resalePrice * 5) / 100,
-            "Fee not transferred correctly"
-        );
+        assertEq(ownerBalance, (resalePrice * 5) / 100, "Fee not transferred correctly");
     }
 
     //unhappy path
@@ -852,9 +780,7 @@ contract VerifyTicketTest is ConcertTicketSystemTest {
         vm.prank(owner);
         addConcert();
         vm.warp(block.timestamp + 1 days);
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC721NonexistentToken.selector, 2)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC721NonexistentToken.selector, 2));
         concertTicketSystem.verifyTicket(1, 2, user);
     }
 
@@ -919,9 +845,7 @@ contract VerifyTicketTest is ConcertTicketSystemTest {
 
         // Step 3: Call the buyTicket function with 1 ether as msg.value
         concertTicketSystem.buyTicket{value: 1 ether}(1, 0);
-        vm.expectRevert(
-            abi.encodeWithSelector(ERC721NonexistentToken.selector, 1)
-        );
+        vm.expectRevert(abi.encodeWithSelector(ERC721NonexistentToken.selector, 1));
         concertTicketSystem.verifyTicket(2, 1, user);
         vm.stopPrank(); // Stop impersonating `user
     }
@@ -1023,11 +947,7 @@ contract AddCartTest is ConcertTicketSystemTest {
 
         assertEq(concertName, "Concert Name", "Incorrect concert name in cart");
         assertEq(artistName, "Artist Name", "Incorrect artist name in cart");
-        assertEq(
-            ticketClass.name,
-            "VIP",
-            "Incorrect ticket class name in cart"
-        );
+        assertEq(ticketClass.name, "VIP", "Incorrect ticket class name in cart");
         assertEq(ticketClass.price, 1 ether, "Incorrect ticket price in cart");
         assertEq(quantity, 2, "Incorrect quantity in cart");
 
@@ -1061,9 +981,7 @@ contract GetAllConcertsTest is ConcertTicketSystemTest {
     }
 
     // Helper function to convert uint to string
-    function uintToString(
-        uint256 _i
-    ) internal pure returns (string memory str) {
+    function uintToString(uint256 _i) internal pure returns (string memory str) {
         if (_i == 0) {
             return "0";
         }
@@ -1109,26 +1027,13 @@ contract GetAllConcertsTest is ConcertTicketSystemTest {
         addMultipleConcerts(3);
 
         // Get all active concerts
-        ConcertTicketSystem.Concert[]
-            memory activeConcerts = concertTicketSystem.getAllConcerts(true);
+        ConcertTicketSystem.Concert[] memory activeConcerts = concertTicketSystem.getAllConcerts(true);
 
         // Assert
         assertEq(activeConcerts.length, 3, "Should return 3 active concerts");
-        assertEq(
-            activeConcerts[0].concertName,
-            "Concert 1",
-            "First concert name mismatch"
-        );
-        assertEq(
-            activeConcerts[1].concertName,
-            "Concert 2",
-            "Second concert name mismatch"
-        );
-        assertEq(
-            activeConcerts[2].concertName,
-            "Concert 3",
-            "Third concert name mismatch"
-        );
+        assertEq(activeConcerts[0].concertName, "Concert 1", "First concert name mismatch");
+        assertEq(activeConcerts[1].concertName, "Concert 2", "Second concert name mismatch");
+        assertEq(activeConcerts[2].concertName, "Concert 3", "Third concert name mismatch");
     }
 
     // Happy path: Get all inactive concerts (when all are active)
@@ -1137,33 +1042,22 @@ contract GetAllConcertsTest is ConcertTicketSystemTest {
         addMultipleConcerts(3);
 
         // Get all inactive concerts
-        ConcertTicketSystem.Concert[]
-            memory inactiveConcerts = concertTicketSystem.getAllConcerts(false);
+        ConcertTicketSystem.Concert[] memory inactiveConcerts = concertTicketSystem.getAllConcerts(false);
 
         // Assert
-        assertEq(
-            inactiveConcerts.length,
-            0,
-            "Should return 0 inactive concerts"
-        );
+        assertEq(inactiveConcerts.length, 0, "Should return 0 inactive concerts");
     }
 
     // Happy path: Get all concerts when no concerts exist
     function test_GetAllConcerts_WhenNoConcerts() public {
         // Get all active concerts
-        ConcertTicketSystem.Concert[]
-            memory activeConcerts = concertTicketSystem.getAllConcerts(true);
+        ConcertTicketSystem.Concert[] memory activeConcerts = concertTicketSystem.getAllConcerts(true);
 
         // Get all inactive concerts
-        ConcertTicketSystem.Concert[]
-            memory inactiveConcerts = concertTicketSystem.getAllConcerts(false);
+        ConcertTicketSystem.Concert[] memory inactiveConcerts = concertTicketSystem.getAllConcerts(false);
 
         // Assert
         assertEq(activeConcerts.length, 0, "Should return 0 active concerts");
-        assertEq(
-            inactiveConcerts.length,
-            0,
-            "Should return 0 inactive concerts"
-        );
+        assertEq(inactiveConcerts.length, 0, "Should return 0 inactive concerts");
     }
 }
