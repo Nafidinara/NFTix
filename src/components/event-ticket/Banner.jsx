@@ -1,19 +1,23 @@
 import React from 'react';
 
-const Banner = () => {
+const Banner = ({ concertInfo }) => {
+  if (!concertInfo) return null;
+
   return (
     <section 
       className="details-banner event-details-banner hero-area bg_img seat-plan-banner"
-      style={{ backgroundImage: `url('/assets/images/banner/banner07.jpg')` }}
+      style={{ backgroundImage: concertInfo.ticketClasses[0]?.backgroundUrl 
+        ? `url('${concertInfo.ticketClasses[0].backgroundUrl}')`
+        : `url('/assets/images/ticket/ticket-bg01.jpg')` }}
     >
       <div className="container">
         <div className="details-banner-wrapper">
           <div className="details-banner-content style-two">
             <h3 className="title">
-              <span className="d-block">Coldplay: Music of the Spheres World Tour</span>
+              <span className="d-block">{concertInfo.name}</span>
             </h3>
             <div className="tags">
-              <span>17 South Sherman Street Astoria, NY 11106</span>
+              <span>{concertInfo.venue}</span>
             </div>
           </div>
         </div>

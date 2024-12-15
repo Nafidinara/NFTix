@@ -2,38 +2,48 @@ import { useEffect } from 'react';
 
 const useOwlCarousel = (selector, options = {}) => {
   useEffect(() => {
-    if (window.jQuery) {
+    const initCarousel = () => {
       const $ = window.jQuery;
-      const carousel = $(selector);
-      
-      const defaultOptions = {
-        loop: true,
-        responsiveClass: true,
-        nav: false,
-        dots: false,
-        margin: 30,
-        autoplay: true,
-        autoplayTimeout: 2000,
-        autoplayHoverPause: true,
-        responsive: {
-          0: { items: 1 },
-          576: { items: 2 },
-          768: { items: 2 },
-          992: { items: 3 },
-          1200: { items: 4 }
+      if ($ && $.fn.owlCarousel) {
+        const $selector = $(selector);
+        if ($selector.length) {
+          // Destroy existing carousel instance if any
+          if ($selector.data('owl.carousel')) {
+            $selector.trigger('destroy.owl.carousel');
+          }
+          
+          // Initialize new carousel
+          setTimeout(() => {
+            $selector.owlCarousel({
+              loop: true,
+              margin: 30,
+              nav: false,
+              dots: false,
+              autoplay: false,
+              responsive: {
+                0: { items: 1 },
+                576: { items: 2 },
+                768: { items: 3 },
+                992: { items: 4 }
+              },
+              ...options
+            });
+          }, 100);
         }
-      };
+      }
+    };
 
-      const carouselOptions = { ...defaultOptions, ...options };
-      
-      // Initialize Owl Carousel
-      carousel.owlCarousel(carouselOptions);
+    initCarousel();
 
-      // Cleanup
-      return () => {
-        carousel.owlCarousel('destroy');
-      };
-    }
+    return () => {
+      const $ = window.jQuery;
+      if ($) {
+        const $selector = $(selector);
+        if ($selector.length && $selector.data('owl.carousel')) {
+          $selector.trigger('destroy.owl.carousel');
+        }
+      }
+    };
   }, [selector, options]);
 };
 

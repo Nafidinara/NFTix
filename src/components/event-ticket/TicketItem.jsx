@@ -1,6 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAddToCart } from '../../hooks/useContract';
+import { useAccount, useConnect } from 'wagmi';
+import { injected } from 'wagmi/connectors';
 
-const TicketItem = ({ type, icon, price, features, isHot }) => {
+const TicketItem = ({ type, price, isHot, ticketClassIndex }) => {
+  const { id: concertId } = useParams();
+  const { addToCart, isPending } = useAddToCart();
+  const { isConnected } = useAccount();
+  const { connect } = useConnect();
+
+  const handleClick = async () => {
+    if (!isConnected) {
+      connect({ connector: injected() });
+      return;
+    }
+
+    try {
+      await addToCart(concertId, ticketClassIndex, 1);
+    } catch (error) {
+      console.error('Failed to add ticket to cart:', error);
+    }
+  };
+
   return (
     <div className={`ticket--item ${type === 'Premium' ? 'two' : type === 'VIP' ? 'three' : ''}`}>
       {isHot && (
@@ -13,15 +35,14 @@ const TicketItem = ({ type, icon, price, features, isHot }) => {
       </div>
       <div className="ticket-content">
         <span className="ticket-title">{type} Ticket</span>
-        <h2 className="amount">{price} ETH</h2>
-        <ul>
-          {features.map((feature, index) => (
-            <li key={index} className={feature.disabled ? 'del' : ''}>
-              {feature.disabled ? <del>{feature.text}</del> : feature.text}
-            </li>
-          ))}
-        </ul>
-        <a href="/concert-checkout" className="custom-button">book tickets</a>
+        <h2 className="amount mb-5">{price} ETH</h2>
+        <button 
+          className="custom-button"
+          onClick={handleClick}
+          disabled={isPending}
+        >
+          {isPending ? 'Processing...' : 'book tickets'}
+        </button>
       </div>
     </div>
   );

@@ -5,22 +5,27 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.1",
     "@headlessui/react": "^2.2.0",
+    "@tanstack/react-query": "^5.62.7",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "@web3-react/core": "^8.2.3",
-    "@web3-react/injected-connector": "^6.0.7",
+    "@web3modal/wagmi": "^5.1.11",
     "bootstrap": "^5.3.3",
+    "dotenv": "^16.4.7",
     "ethers": "^6.13.4",
     "jquery": "^3.7.1",
     "magnific-popup": "^1.2.0",
     "owl.carousel": "^2.3.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-dotenv": "^0.1.3",
     "react-router-dom": "^7.0.1",
     "react-scripts": "5.0.1",
     "tailwindcss": "^3.4.15",
-    "web-vitals": "^2.1.4"
+    "viem": "^2.21.54",
+    "wagmi": "^2.14.0",
+    "web-vitals": "^2.1.4",
+    "web3": "^4.16.0"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -32,7 +37,11 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "env": {
+      "browser": true,
+      "jquery": true
+    }
   },
   "browserslist": {
     "production": [

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import WalletButton from './WalletButton';
 
 const Header = () => {
   const [isSticky, setSticky] = useState(false);
@@ -36,24 +37,29 @@ const Header = () => {
                 />
               </Link>
             </div>
-            <ul className={`menu ${isMobileMenuOpen ? 'active' : ''}`}>
-              <li>
-                <Link to="/">Home</Link>
-              </li>
-              <li>
-                <Link to="/contact">Contact</Link>
-              </li>
-              <li>
-                <Link to="/about">About Us</Link>
-              </li>
-            </ul>
-            <div 
-              className={`header-bar d-lg-none ${isMobileMenuOpen ? 'active' : ''}`}
-              onClick={toggleMobileMenu}
-            >
-              <span></span>
-              <span></span>
-              <span></span>
+            <div className="menu-and-wallet">
+              <ul className={`menu ${isMobileMenuOpen ? 'active' : ''}`}>
+                <li>
+                  <Link to="/">Home</Link>
+                </li>
+                <li>
+                  <Link to="/contact">Contact</Link>
+                </li>
+                <li>
+                  <Link to="/about">About Us</Link>
+                </li>
+                <li className="wallet-button-container">
+                  <WalletButton />
+                </li>
+              </ul>
+              <div 
+                className={`header-bar d-lg-none ${isMobileMenuOpen ? 'active' : ''}`}
+                onClick={toggleMobileMenu}
+              >
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
           </div>
         </div>

@@ -3133,8 +3133,34 @@ input[type="submit"] {
   width: 100%;
 }
 
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 140%; /* Aspect ratio 10:14 */
+  overflow: hidden;
+}
+
+.image-wrapper img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .movie-list .movie-content .title {
   margin-bottom: 18px;
+}
+
+.movie-content .title {
+  font-size: 18px;
+  margin-bottom: 15px;
+  font-weight: 600;
+  height: 130px;
+  /* white-space: nowrap;
+  overflow: hidden; */
+  /* text-overflow: ellipsis; */
 }
 
 .movie-list .movie-content .movie-tags {
@@ -6025,7 +6051,7 @@ input[type="submit"] {
 }
 
 .event-search-bottom .contact-side {
-  width: calc(100% - 260px);
+  width: calc(100% - 20px);
   -webkit-box-pack: justify;
       -ms-flex-pack: justify;
           justify-content: space-between;
@@ -9111,4 +9137,113 @@ aside {
     opacity: 0;
   }
 }
+
+.menu-and-wallet {
+  display: flex;
+  align-items: center;
+}
+
+.wallet-button-container {
+  margin-left: 20px;
+}
+
+/* Styling untuk tombol wallet */
+.wallet-button-container button {
+  background: linear-gradient(to right, #31d7a9, #228B22);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.wallet-button-container button:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Responsive styling */
+@media (max-width: 991px) {
+  .wallet-button-container {
+    margin: 10px 0;
+  }
+  
+  .menu.active .wallet-button-container {
+    text-align: center;
+  }
+}
+
+/* Loading skeleton styles */
+.loading-skeleton .skeleton-bg {
+  background: linear-gradient(
+    90deg,
+    #001232 25%,
+    #002266 50%,
+    #001232 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.loading-skeleton .image-wrapper {
+  background: #001232;
+}
+
+.loading-skeleton .title-skeleton {
+  height: 24px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.loading-skeleton .meta-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.loading-skeleton .meta-skeleton div {
+  height: 20px;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+
+.modal-overlay {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.modal-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 /*# sourceMappingURL=main.css.map */
+
